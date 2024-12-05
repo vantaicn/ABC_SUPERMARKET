@@ -30,8 +30,7 @@ CREATE PROCEDURE sp_UpdateProductInfo
     @description NVARCHAR(100),
     @idManufacturer CHAR(10),
     @price INT,
-    @maxQuantity INT,
-    @currentQuantity INT
+    @maxQuantity INT
 AS
 BEGIN
     UPDATE Product
@@ -41,8 +40,7 @@ BEGIN
         description = @description,
         id_manufacturer = @idManufacturer,
         price = @price,
-        max_quantity = @maxQuantity,
-        current_quantity = @currentQuantity
+        max_quantity = @maxQuantity
     WHERE id = @id;
 END;
 GO
@@ -100,78 +98,58 @@ GO
 
 CREATE PROCEDURE sp_UpdateFlashSale
     @id CHAR(10),
-    @idProduct CHAR(10),
     @discount INT,
-    @startDate DATE,
     @endDate DATE,
-    @maxQuantity INT,
-    @usedQuantity INT
+    @maxQuantity INT
 AS
 BEGIN
     UPDATE Promotion
     SET 
-        id_product = @idProduct,
         discount = @discount,
-        start_date = @startDate,
         end_date = @endDate,
-        max_quantity = @maxQuantity,
-        used_quantity = @usedQuantity
+        max_quantity = @maxQuantity
     WHERE id = @id AND type = 'Flash';
 END;
 GO
 
 CREATE PROCEDURE sp_UpdateComboSale
     @id CHAR(10),
-    @idProduct CHAR(10),
-    @idProductCombo CHAR(10),
     @discount INT,
-    @startDate DATE,
     @endDate DATE,
-    @maxQuantity INT,
-    @usedQuantity INT
+    @maxQuantity INT
 AS
 BEGIN
     UPDATE Promotion
     SET 
-        id_product = @idProduct,
-        id_product_combo = @idProductCombo,
         discount = @discount,
-        start_date = @startDate,
         end_date = @endDate,
-        max_quantity = @maxQuantity,
-        used_quantity = @usedQuantity
+        max_quantity = @maxQuantity
     WHERE id = @id AND type = 'Combo';
 END;
 GO
 
 CREATE PROCEDURE sp_UpdateMemberSale
     @id CHAR(10),
-    @idProduct CHAR(10),
     @discount INT,
     @bronzeDiscount INT,
     @silverDiscount INT,
     @goldDiscount INT,
     @platinumDiscount INT,
 	@diamondDiscount INT,
-    @startDate DATE,
     @endDate DATE,
-    @maxQuantity INT,
-    @usedQuantity INT
+    @maxQuantity INT
 AS
 BEGIN
     UPDATE Promotion
     SET 
-        id_product = @idProduct,
         discount = @discount,
         bronze_discount = @bronzeDiscount,
         silver_discount = @silverDiscount,
         gold_discount = @goldDiscount,
         platinum_discount = @platinumDiscount,
         diamond_discount = @diamondDiscount,
-        start_date = @startDate,
         end_date = @endDate,
-        max_quantity = @maxQuantity,
-        used_quantity = @usedQuantity
+        max_quantity = @maxQuantity
     WHERE id = @id AND type = 'Member';
 END;
 GO
