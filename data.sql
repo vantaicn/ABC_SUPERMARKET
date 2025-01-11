@@ -63,6 +63,37 @@ values
 ('EMP011', N'Đỗ Quang Minh', N'Nam', '222233334444555', '0945678901', 'DEPT0002'),
 ('EMP012', N'Trịnh Huy Hoàng', N'Nam', '333344445555666', '0956789012', 'DEPT0001')
 
+INSERT INTO Manufacturer (id, name, address, phone_number) VALUES
+('NSX001', N'Công Ty TNHH Lương Thực Miền Nam', N'Số 10 Đường Phạm Ngũ Lão, Quận 1, TP. Hồ Chí Minh', '0901234567'),
+('NSX002', N'Tập Đoàn Dầu Ăn Việt Nam', N'Số 20 Đường Lý Tự Trọng, Quận 3, TP. Hồ Chí Minh', '0912345678'),
+('NSX003', N'Công Ty Sữa Vinamilk', N'Số 50 Đường Trần Hưng Đạo, Quận 5, TP. Hồ Chí Minh', '0987654321'),
+('NSX004', N'Coca Cola Việt Nam', N'Số 100 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh', '0923456789'),
+('NSX005', N'Tập Đoàn Omo Việt Nam', N'Số 25 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh', '0934567890'),
+('NSX006', N'Công Ty Bánh Kẹo Hải Châu', N'Số 15 Đường Lê Duẩn, Quận 4, TP. Hà Nội', '0945678901'),
+('NSX007', N'Công Ty Hóa Phẩm PS', N'Số 45 Đường Hàng Bài, Quận Hoàn Kiếm, Hà Nội', '0956789012'),
+('NSX008', N'Nhà Cung Cấp Thực Phẩm Hữu Cơ', N'Số 30 Đường Giải Phóng, Quận Hai Bà Trưng, Hà Nội', '0967890123'),
+('NSX009', N'Tập Đoàn Knorr Việt Nam', N'Số 5 Đường Cách Mạng Tháng 8, TP. Đà Nẵng', '0978901234'),
+('NSX010', N'Công Ty Nước Mắm Nam Ngư', N'Số 55 Đường Võ Văn Tần, TP. Nha Trang', '0989012345'),
+('NSX011', N'Nhà Máy Bia Heineken', N'Số 75 Đường Trường Chinh, TP. Hà Nội', '0901123456'),
+('NSX012', N'Công Ty Pulppy Việt Nam', N'Số 18 Đường Hồ Tùng Mậu, TP. Hải Phòng', '0912233445'),
+('NSX013', N'Công Ty Lavie', N'Số 88 Đường 3 Tháng 2, TP. Cần Thơ', '0923344556'),
+('NSX014', N'Công Ty CP Việt Nam', N'Số 101 Đường Lạc Long Quân, TP. Biên Hòa', '0934455667'),
+('NSX015', N'Công Ty Head & Shoulders', N'Số 44 Đường Hoàng Văn Thụ, TP. Đà Lạt', '0945566778'),
+('NSX016', N'Công Ty Bánh Mì Việt', N'Số 60 Đường Trần Phú, TP. Đà Nẵng', '0956677889'),
+('NSX017', N'Công Ty Kẹo Alpenliebe', N'Số 90 Đường Nguyễn Trãi, TP. Hà Nội', '0967788990'),
+('NSX018', N'Công Ty Acecook Việt Nam', N'Số 33 Đường Nguyễn Chí Thanh, TP. Hồ Chí Minh', '0978899001'),
+('NSX019', N'Công Ty Trà Lipton', N'Số 25 Đường Hùng Vương, TP. Đà Lạt', '0989900112'),
+('NSX020', N'Công Ty Chinsu Foods', N'Số 70 Đường Đinh Tiên Hoàng, TP. Hà Nội', '0990011223'),
+('NSX021', N'Công Ty Bột Mì Meizan', N'Số 85 Đường Điện Biên Phủ, TP. Đà Nẵng', '0901122334'),
+('NSX022', N'Công Ty Đường Miền Nam', N'Số 17 Đường Phan Chu Trinh, TP. Cần Thơ', '0912233445'),
+('NSX023', N'Nhà Cung Cấp Rau Sạch', N'Số 77 Đường Nguyễn Thái Học, TP. Buôn Ma Thuột', '0923344556'),
+('NSX024', N'Tập Đoàn Hoa Quả Nhập Khẩu', N'Số 120 Đường Hàm Nghi, TP. Hồ Chí Minh', '0934455667'),
+('NSX025', N'Công Ty Tôm Khô Việt', N'Số 66 Đường Hoàng Diệu, TP. Rạch Giá', '0945566778'),
+('NSX026', N'Công Ty Mắm Ruốc Huế', N'Số 18 Đường Phạm Văn Đồng, TP. Huế', '0956677889'),
+('NSX027', N'Công Ty Nước Cốt Dừa Bến Tre', N'Số 99 Đường Nguyễn Đình Chiểu, TP. Bến Tre', '0967788990'),
+('NSX028', N'Công Ty Ajinomoto', N'Số 38 Đường Nguyễn Văn Cừ, TP. Hà Nội', '0978899001');
+
+
 -- Phân hệ 2: Quản lý ngành hàng (Tài)
 
 INSERT INTO Product (id, name, category, description, id_manufacturer, price, max_quantity, current_quantity)
@@ -183,19 +214,6 @@ INSERT INTO Detail_order (id_order, id_product, quantity, price, id_sale, total_
 
 
 -- Phân hệ 4: Quản lý kho hàng (Thuận)
-INSERT INTO Product(id,name,category,description,id_manufacturer,price,max_quantity,current_quantity)
-values
-	('PD0001', 'Milk', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400),
-    ('PD0002', 'Bread', 'CAKE', 'Whole grain bread', 'M000000002', 15000, 500, 250),
-    ('PD0003', 'Butter', 'BUTTER', 'Salted butter', 'M000000002', 30000, 700, 200),
-    ('PD0004', 'Cheese', 'CHEESE', 'Cheddar cheese', 'M000000003', 45000, 500, 300),
-    ('PD0005', 'Pepsi', 'Drink', 'fresh', 'M000000004', 45000, 500, 300),
-	('PD0006', 'TH true milk', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400),
-	('PD0007', 'cocacola', 'Drink', 'Fresh', 'M000000004', 5000, 1000, 400),
-	('PD0008', 'Snack', 'CAKE', 'Whole grain bread', 'M000000002', 15000, 500, 250),
-	('PD0009', 'oild', 'CHEESE', 'Cheddar cheese', 'M000000003', 15000, 500, 250),
-	('PD0010', 'MILO', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400)
-Go
 
 INSERT INTO ImportOrder (
     id,
@@ -223,11 +241,11 @@ VALUES
 -- Phân hệ 5: Phân hệ kinh doanh 
 INSERT INTO Product_sold_report (id, date_report, id_product, quantity_sold, quantity_customer, id_employee)
 VALUES
-('RPT001', '2025-01-10', 'P0001', 50, 20, 'EMP001'),
-('RPT002', '2025-01-10', 'P0002', 30, 15, 'EMP001'),
-('RPT003', '2025-01-10', 'P0003', 70, 25, 'EMP002'),
-('RPT004', '2025-01-10', 'P0004', 20, 10, 'EMP002'),
-('RPT005', '2025-01-10', 'P0005', 40, 18, 'EMP003');
+('RPT001', '2025-01-10', 'PRD001', 50, 20, 'EMP001'),
+('RPT002', '2025-01-10', 'PRD002', 30, 15, 'EMP001'),
+('RPT003', '2025-01-10', 'PRD003', 70, 25, 'EMP002'),
+('RPT004', '2025-01-10', 'PRD004', 20, 10, 'EMP002'),
+('RPT005', '2025-01-10', 'PRD005', 40, 18, 'EMP003');
 GO
 
 INSERT INTO Daily_report (id, date_report, total_customer, total_revenue, total_sold_products, id_employee)
