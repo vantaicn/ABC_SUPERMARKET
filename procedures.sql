@@ -228,11 +228,20 @@ CREATE PROCEDURE sp_AddProduct
     @currentQuantity INT
 AS
 BEGIN
-    INSERT INTO Product (id, name, category, description, id_manufacturer, price, max_quantity, current_quantity)
-    VALUES (@id, @name, @category, @description, @idManufacturer, @price, @maxQuantity, @currentQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Product (id, name, category, description, id_manufacturer, price, max_quantity, current_quantity)
+        VALUES (@id, @name, @category, @description, @idManufacturer, @price, @maxQuantity, @currentQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW; -- Ném lỗi để client biết giao tác thất bại
+    END CATCH
 END;
 GO
-
 
 CREATE PROCEDURE sp_UpdateProductInfo
     @id CHAR(10),
@@ -244,15 +253,25 @@ CREATE PROCEDURE sp_UpdateProductInfo
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Product
-    SET 
-        name = @name,
-        category = @category,
-        description = @description,
-        id_manufacturer = @idManufacturer,
-        price = @price,
-        max_quantity = @maxQuantity
-    WHERE id = @id;
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Product
+        SET 
+            name = @name,
+            category = @category,
+            description = @description,
+            id_manufacturer = @idManufacturer,
+            price = @price,
+            max_quantity = @maxQuantity
+        WHERE id = @id;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -266,8 +285,18 @@ CREATE PROCEDURE sp_AddFlashSale
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Flash', @idProduct, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Flash', @idProduct, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -282,8 +311,18 @@ CREATE PROCEDURE sp_AddComboSale
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, id_product_combo, discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Combo', @idProduct, @idProductCombo, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, id_product_combo, discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Combo', @idProduct, @idProductCombo, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -295,15 +334,25 @@ CREATE PROCEDURE sp_AddMemberSale
     @silverDiscount INT,
     @goldDiscount INT,
     @platinumDiscount INT,
-	@diamondDiscount INT,
+    @diamondDiscount INT,
     @startDate DATE,
     @endDate DATE,
     @maxQuantity INT,
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, discount, bronze_discount, silver_discount, gold_discount, platinum_discount, diamond_discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Member', @idProduct, @discount, @bronzeDiscount, @silverDiscount, @goldDiscount, @platinumDiscount, @diamondDiscount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, discount, bronze_discount, silver_discount, gold_discount, platinum_discount, diamond_discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Member', @idProduct, @discount, @bronzeDiscount, @silverDiscount, @goldDiscount, @platinumDiscount, @diamondDiscount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -314,12 +363,22 @@ CREATE PROCEDURE sp_UpdateFlashSale
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Flash';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Flash';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -330,12 +389,22 @@ CREATE PROCEDURE sp_UpdateComboSale
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Combo';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Combo';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -346,25 +415,34 @@ CREATE PROCEDURE sp_UpdateMemberSale
     @silverDiscount INT,
     @goldDiscount INT,
     @platinumDiscount INT,
-	@diamondDiscount INT,
+    @diamondDiscount INT,
     @endDate DATE,
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        bronze_discount = @bronzeDiscount,
-        silver_discount = @silverDiscount,
-        gold_discount = @goldDiscount,
-        platinum_discount = @platinumDiscount,
-        diamond_discount = @diamondDiscount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Member';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            bronze_discount = @bronzeDiscount,
+            silver_discount = @silverDiscount,
+            gold_discount = @goldDiscount,
+            platinum_discount = @platinumDiscount,
+            diamond_discount = @diamondDiscount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Member';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
-
 
 -- Phân hệ 3: Bộ phận quản lý đơn hàng (Thành)
 -- sp_GetProductPrice:
