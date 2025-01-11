@@ -73,6 +73,34 @@ CREATE TABLE Promotion (
     FOREIGN KEY (id_product_combo) REFERENCES Product(id)
 );
 
+
+-- Phân hệ 3: Quản lý đơn hàng (Thành)
+-- Tạo bảng Order
+CREATE TABLE "Order" (
+    id_order CHAR(10) PRIMARY KEY,
+    id_customer CHAR(10) NOT NULL,
+    create_date DATE NOT NULL,
+    total_price INT NOT NULL,
+    processing_employee CHAR(10),
+    FOREIGN KEY (id_customer) REFERENCES Customer(id_customer),
+    FOREIGN KEY (processing_employee) REFERENCES Employee(id)
+);
+
+-- Tạo bảng Detail_order
+CREATE TABLE Detail_order (
+    id_order CHAR(10),
+    id_product CHAR(10),
+    quantity INT NOT NULL,
+    price INT NOT NULL,
+    id_sale CHAR(10),
+    total_price INT NOT NULL,
+    PRIMARY KEY (id_order, id_product),
+    FOREIGN KEY (id_order) REFERENCES "Order"(id_order),
+    FOREIGN KEY (id_product) REFERENCES Product(id),
+    FOREIGN KEY (id_sale) REFERENCES Promotion(id)
+);
+
+
 -- Phân hệ 4: Quản lý kho hàng (Thuận)
 CREATE TABLE ImportOrder (
     id CHAR(10) PRIMARY KEY,       
@@ -86,7 +114,6 @@ CREATE TABLE ImportOrder (
     FOREIGN KEY (id_product) REFERENCES Product(id)
 )
 go
-
 
 
 -- Phân hệ 5: Phân hệ kinh doanh 
