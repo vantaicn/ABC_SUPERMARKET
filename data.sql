@@ -223,11 +223,11 @@ VALUES
 -- Phân hệ 5: Phân hệ kinh doanh 
 INSERT INTO Product_sold_report (id, date_report, id_product, quantity_sold, quantity_customer, id_employee)
 VALUES
-('RPT001', '2025-01-10', 'PRD001', 50, 20, 'EMP001'),
-('RPT002', '2025-01-10', 'PRD002', 30, 15, 'EMP001'),
-('RPT003', '2025-01-10', 'PRD003', 70, 25, 'EMP002'),
-('RPT004', '2025-01-10', 'PRD004', 20, 10, 'EMP002'),
-('RPT005', '2025-01-10', 'PRD005', 40, 18, 'EMP003');
+('RPT001', '2025-01-10', 'P0001', 50, 20, 'EMP001'),
+('RPT002', '2025-01-10', 'P0002', 30, 15, 'EMP001'),
+('RPT003', '2025-01-10', 'P0003', 70, 25, 'EMP002'),
+('RPT004', '2025-01-10', 'P0004', 20, 10, 'EMP002'),
+('RPT005', '2025-01-10', 'P0005', 40, 18, 'EMP003');
 GO
 
 INSERT INTO Daily_report (id, date_report, total_customer, total_revenue, total_sold_products, id_employee)
