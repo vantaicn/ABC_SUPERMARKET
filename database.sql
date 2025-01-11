@@ -41,6 +41,13 @@ id_department CHAR(10)
 CONSTRAINT fk_employee_department FOREIGN KEY (id_department) REFERENCES department(id)
 )
 
+CREATE TABLE Manufacturer(
+id CHAR(10) CONSTRAINT pk_manufacturer PRIMARY KEY,
+name NCHAR(30),
+address NVARCHAR(50),
+phone_number CHAR(10)
+)
+
 -- Phân hệ 2: Quản lý ngành hàng (Tài)
 
 CREATE TABLE Product (
@@ -51,7 +58,8 @@ CREATE TABLE Product (
     id_manufacturer CHAR(10),
     price INT NOT NULL,
     max_quantity INT NOT NULL,
-    current_quantity INT
+    current_quantity INT,
+	CONSTRAINT fk_product_manufacturer FOREIGN KEY (id_manufacturer) REFERENCES manufacturer(id)
 );
 
 CREATE TABLE Promotion (

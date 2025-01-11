@@ -1022,7 +1022,7 @@ BEGIN
         DECLARE @id_order CHAR(10);
 
         DECLARE cur CURSOR FOR
-        SELECT id FROM Product;
+        SELECT id FROM Product with (HOLDLOCK);
         OPEN cur;
 
         FETCH NEXT FROM cur INTO @id_product;
