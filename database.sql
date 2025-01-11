@@ -7,7 +7,39 @@ GO
 USE ABC_SUPERMARKET
 GO
 
+-- Phân hệ 1: Chăm sóc khách hàng (Thảo)
+CREATE TABLE Loyal_rank(
+id_rank CHAR(10) CONSTRAINT pk_loyal_rank PRIMARY KEY,
+name NVARCHAR(20) NOT NULL,
+coupon INT,
+)
 
+
+CREATE TABLE Customer(
+id_customer CHAR(10) CONSTRAINT pk_customer PRIMARY KEY,
+phone_number CHAR(10) UNIQUE,
+name NVARCHAR(50),
+birthdate DATE NOT NULL,
+registration_date DATE NOT NULL,
+id_rank CHAR(10) CONSTRAINT df_idrank DEFAULT 1,
+CONSTRAINT fk_customer_loyalRank FOREIGN KEY (id_rank) REFERENCES loyal_rank(id_rank),
+)
+
+create table department(
+id char(10) constraint pk_department primary key,
+name nvarchar(30),
+leader char(10)
+)
+
+create table employee(
+id char(10) constraint pk_employee primary key,
+name nvarchar(30),
+gender nvarchar(5),
+identification char(15),
+phone_number char(10),
+id_department char(10)
+constraint fk_employee_department foreign key (id_department) references department(id)
+)
 
 -- Phân hệ 2: Quản lý ngành hàng (Tài)
 
