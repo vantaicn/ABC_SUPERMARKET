@@ -854,6 +854,7 @@ BEGIN
     END CATCH
 END
 GO
+
 CREATE PROCEDURE sp_CapNhatNhanHang
     @id_product CHAR(10),
     @quantity_receive INT,
@@ -925,13 +926,47 @@ BEGIN
     END CATCH
 END
 GO
-DECLARE @id_order CHAR(10)
 
-EXEC sp_TaoDonDatHang 
-	@id_product = 'PD0000005',
-	@id_order = @id_order OUTPUT,
-	@Id_employee = 'E1001'
-GO
+CREATE PROCEDURE sp_DuyetTatCaSanPhamVaDatHang
+AS
+BEGIN
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @id_product CHAR(10);
+        DECLARE @quantity_oder INT;
+        DECLARE @id_order CHAR(10);
+
+        DECLARE cur CURSOR FOR
+        SELECT id FROM Product;
+        OPEN cur;
+
+        FETCH NEXT FROM cur INTO @id_product;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            EXEC sp_KiemTraVaTinhSoLuongDatHang @id_product, @quantity_oder OUTPUT;
+
+            IF @quantity_oder > 0
+            BEGIN
+                EXEC sp_TaoDonDatHang @id_product, @id_order OUTPUT, 'EMP001';
+                PRINT 'Đã tạo đơn đặt hàng: ' + @id_order + ' cho sản phẩm: ' + @id_product;
+            END
+
+            FETCH NEXT FROM cur INTO @id_product;
+        END
+
+        CLOSE cur;
+        DEALLOCATE cur;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;
+        THROW;
+    END CATCH
+END;
+
 
 
 -- Phân hệ 5: Phân hệ kinh doanh 
