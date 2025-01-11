@@ -365,6 +365,396 @@ BEGIN
 END;
 GO
 
+-- Phân hệ 3: Bộ phận quản lý đơn hàng (Thành)
+-- sp_GetProductPrice:
+CREATE PROCEDURE sp_GetProductPrice
+    @id_product CHAR(10),
+    @price INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Đọc giá sản phẩm với shared lock
+        SELECT @price = price 
+        FROM Product WITH (HOLDLOCK, ROWLOCK)
+        WHERE product_id = @id_product;
+
+        IF @price IS NULL
+        BEGIN
+            RAISERROR('Không tìm thấy giá sản phẩm', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+
+-- sp_FindBestSale:
+CREATE PROCEDURE sp_FindBestSale
+    @id_product CHAR(10), 
+    @id_customer CHAR(10),
+    @best_sale_id CHAR(10) OUTPUT,
+    @discount INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    DECLARE @customer_type NVARCHAR(50);
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Xác định loại khách hàng
+        SELECT @customer_type = customer_type 
+        FROM Customer WITH (HOLDLOCK, ROWLOCK)
+        WHERE customer_id = @id_customer;
+
+        -- Ưu tiên Flash Sale
+        SELECT TOP 1 
+            @best_sale_id = promotion_id, 
+            @discount = discount_percent
+        FROM Promotion WITH (HOLDLOCK, ROWLOCK)
+        WHERE promotion_type = 'Flash Sale' 
+            AND product_id = @id_product
+            AND current_quantity > 0
+        ORDER BY discount_percent DESC;
+
+        -- Nếu không có Flash Sale, tìm Combo Sale
+        IF @best_sale_id IS NULL
+        BEGIN
+            SELECT TOP 1 
+                @best_sale_id = promotion_id, 
+                @discount = discount_percent
+            FROM Promotion WITH (HOLDLOCK, ROWLOCK)
+            WHERE promotion_type = 'Combo Sale' 
+                AND product_id = @id_product
+                AND current_quantity > 0
+            ORDER BY discount_percent DESC;
+        END
+
+        -- Nếu không có Combo Sale, tìm Member Sale
+        IF @best_sale_id IS NULL AND @customer_type IN ('Gold', 'Platinum')
+        BEGIN
+            SELECT TOP 1 
+                @best_sale_id = promotion_id, 
+                @discount = discount_percent
+            FROM Promotion WITH (HOLDLOCK, ROWLOCK)
+            WHERE promotion_type = 'Member Sale' 
+                AND product_id = @id_product
+                AND current_quantity > 0
+            ORDER BY discount_percent DESC;
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+-- sp_CalculateFinalPrice:
+CREATE PROCEDURE sp_CalculateFinalPrice
+    @id_product CHAR(10), 
+    @quantity INT, 
+    @sale_id CHAR(10),
+    @discount INT,
+    @final_price INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    DECLARE @original_price INT;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Lấy giá gốc sản phẩm
+        EXEC sp_GetProductPrice @id_product, @original_price OUTPUT;
+
+        -- Tính giá cuối cùng
+        SET @final_price = @original_price * @quantity;
+        
+        IF @discount IS NOT NULL
+        BEGIN
+            SET @final_price = @final_price * (100 - @discount) / 100;
+        END
+
+        -- Cập nhật số lượng khuyến mãi đã sử dụng
+        IF @sale_id IS NOT NULL
+        BEGIN
+            UPDATE Promotion WITH (ROWLOCK)
+            SET current_quantity = current_quantity - @quantity
+            WHERE promotion_id = @sale_id AND current_quantity >= @quantity;
+
+            IF @@ROWCOUNT = 0
+            BEGIN
+                RAISERROR('Không đủ số lượng khuyến mãi', 16, 1);
+                ROLLBACK TRANSACTION;
+                RETURN;
+            END
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+
+-- sp_ApplyLoyaltyDiscount (Dieu Thao)
+CREATE PROCEDURE sp_ApplyLoyaltyDiscount
+    @id_customer CHAR(10),
+    @sub_total INT,
+    @loyalty_discount INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    DECLARE @customer_type NVARCHAR(50);
+    DECLARE @total_purchase DECIMAL(18,2);
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Lấy thông tin khách hàng
+        SELECT 
+            @customer_type = customer_type,
+            @total_purchase = total_purchase
+        FROM Customer WITH (HOLDLOCK)
+        WHERE customer_id = @id_customer;
+
+        -- Áp dụng chiết khấu theo loại khách hàng
+        SET @loyalty_discount = 0;
+
+        IF @customer_type = 'Platinum'
+        BEGIN
+            IF @sub_total >= 10000000 
+                SET @loyalty_discount = @sub_total * 0.10; -- 10% 
+            ELSE IF @sub_total >= 5000000
+                SET @loyalty_discount = @sub_total * 0.05; -- 5%
+        END
+        ELSE IF @customer_type = 'Gold'
+        BEGIN
+            IF @sub_total >= 5000000
+                SET @loyalty_discount = @sub_total * 0.03; -- 3%
+        END
+
+        -- Giới hạn mức chiết khấu tối đa
+        SET @loyalty_discount = FLOOR(@loyalty_discount);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+-- sp_ProcessCustomerOrder:
+CREATE TYPE ProductTableType AS TABLE (
+    product_id CHAR(10),
+    quantity INT
+);
+
+GO
+CREATE PROCEDURE sp_ProcessCustomerOrder
+    @id_customer CHAR(10), 
+    @id_order CHAR(10), 
+    @create_date DATE,
+    @total_price INT,
+    @processing_employee CHAR(10),
+    @products ProductTableType READONLY,
+    @final_price INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    DECLARE @sub_total INT = 0;
+    DECLARE @loyalty_discount INT = 0;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- 1. Kiểm tra tài khoản khách hàng
+        IF NOT EXISTS (SELECT 1 FROM Customer WITH (HOLDLOCK) WHERE customer_id = @id_customer)
+        BEGIN
+            RAISERROR('Khách hàng không tồn tại', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 2. Kiểm tra và tạo đơn hàng
+        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE order_id = @id_order)
+        BEGIN
+            INSERT INTO [Order] (order_id, customer_id, create_date, processing_employee, total_price)
+            VALUES (@id_order, @id_customer, @create_date, @processing_employee, 0);
+        END
+
+        -- 3. Xử lý từng sản phẩm
+        DECLARE product_cursor CURSOR FAST_FORWARD FOR 
+        SELECT product_id, quantity FROM @products;
+
+        DECLARE @current_product_id CHAR(10);
+        DECLARE @current_quantity INT;
+        DECLARE @product_price INT;
+        DECLARE @sale_id CHAR(10);
+        DECLARE @discount INT;
+        DECLARE @product_final_price INT;
+
+        OPEN product_cursor;
+        FETCH NEXT FROM product_cursor INTO @current_product_id, @current_quantity;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            -- 3.1 Lấy giá sản phẩm
+            EXEC sp_GetProductPrice @current_product_id, @product_price OUTPUT;
+
+            -- 3.2 Tìm khuyến mãi tốt nhất
+            EXEC sp_FindBestSale @current_product_id, @id_customer, @sale_id OUTPUT, @discount OUTPUT;
+
+            -- 3.3 Tính giá cuối cùng
+            EXEC sp_CalculateFinalPrice 
+                @current_product_id, 
+                @current_quantity, 
+                @sale_id, 
+                @discount, 
+                @product_final_price OUTPUT;
+
+            -- 3.4 Lưu chi tiết đơn hàng
+            INSERT INTO Detail_Order (order_id, product_id, quantity, price, sale_id)
+            VALUES (@id_order, @current_product_id, @current_quantity, @product_final_price, @sale_id);
+
+            -- 3.5 Cập nhật số lượng sản phẩm
+            UPDATE Product WITH (UPDLOCK)
+            SET current_quantity = current_quantity - @current_quantity
+            WHERE product_id = @current_product_id;
+
+            SET @sub_total = @sub_total + @product_final_price;
+
+            FETCH NEXT FROM product_cursor INTO @current_product_id, @current_quantity;
+        END
+
+        CLOSE product_cursor;
+        DEALLOCATE product_cursor;
+
+        -- 5. Áp dụng giảm giá khách hàng thân thiết
+        EXEC sp_ApplyLoyaltyDiscount @id_customer, @sub_total, @loyalty_discount OUTPUT;
+
+        SET @final_price = @sub_total - @loyalty_discount;
+
+        -- 6. Cập nhật giá trị đơn hàng
+        UPDATE [Order] WITH (UPDLOCK)
+        SET total_price = @final_price
+        WHERE order_id = @id_order;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+
+-- sp_CancelOrder:
+CREATE PROCEDURE sp_CancelOrder
+    @id_order CHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- 1. Kiểm tra tồn tại đơn hàng
+        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE order_id = @id_order)
+        BEGIN
+            RAISERROR('Đơn hàng không tồn tại', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 2. Lấy danh sách sản phẩm
+        DECLARE @DetailProducts TABLE (
+            product_id CHAR(10),
+            quantity INT,
+            sale_id CHAR(10)
+        );
+
+        INSERT INTO @DetailProducts
+        SELECT product_id, quantity, sale_id 
+        FROM Detail_Order WITH (UPDLOCK)
+        WHERE order_id = @id_order;
+
+        -- 3. Hoàn lại số lượng sản phẩm
+        UPDATE Product WITH (UPDLOCK)
+        SET current_quantity = current_quantity + dp.quantity
+        FROM Product p
+        JOIN @DetailProducts dp ON p.product_id = dp.product_id;
+
+        -- 4. Hoàn lại số lượng khuyến mãi
+        UPDATE Promotion WITH (UPDLOCK)
+        SET current_quantity = current_quantity + dp.quantity
+        FROM Promotion pr
+        JOIN @DetailProducts dp ON pr.promotion_id = dp.sale_id
+        WHERE dp.sale_id IS NOT NULL;
+
+        -- 5. Xóa chi tiết đơn hàng
+        DELETE FROM Detail_Order WITH (UPDLOCK)
+        WHERE order_id = @id_order;
+
+        -- 6. Xóa đơn hàng
+        DELETE FROM [Order] WITH (UPDLOCK)
+        WHERE order_id = @id_order;
+
+        -- 7. Cập nhật thông tin khách hàng (nếu cần)
+        -- Phần này sẽ phụ thuộc vào logic cụ thể của hệ thống
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        
+        THROW;
+    END CATCH
+END
+
+GO
+
 -- Phân hệ 5: Phân hệ kinh doanh 
 CREATE PROCEDURE sp_AddDailyReport (
     @id CHAR(10),
@@ -427,3 +817,4 @@ BEGIN
     COMMIT;
 END;
 GO
+

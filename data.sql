@@ -161,6 +161,25 @@ VALUES
 ('MS0009', 'Member', 'P0003', NULL, 7, 10, 12, 15, 18, 19, '2024-12-26', '2024-12-31', 85, 0),
 ('MS0010', 'Member', 'P0004', NULL, 6, 9, 12, 16, 18, 20, '2024-12-27', '2024-12-30', 70, 0);
 
+-- Phân hệ 3:Quản lý đơn đặt hàng (Thành)
+INSERT INTO "Order" (id_order, id_customer, create_date, total_price, processing_employee) VALUES
+('ORD000001', 'CUST00001', '2025-01-10', 1200000, 'EMP001'),
+('ORD000002', 'CUST00002', '2025-01-09', 800000, 'EMP002'),
+('ORD000003', 'CUST00003', '2025-01-08', 1500000, 'EMP003'),
+('ORD000004', 'CUST00004', '2025-01-07', 950000, 'EMP001'),
+('ORD000005', 'CUST00005', '2025-01-06', 2000000, 'EMP002');
+
+INSERT INTO Detail_order (id_order, id_product, quantity, price, id_sale, total_price) VALUES
+('ORD000001', 'P0001', 2, 300000, NULL, 600000),
+('ORD000001', 'P0002', 1, 600000, NULL, 600000),
+('ORD000002', 'P0003', 4, 200000, NULL, 800000),
+('ORD000003', 'P0004', 3, 400000, NULL, 1200000),
+('ORD000003', 'P0005', 1, 300000, NULL, 300000),
+('ORD000004', 'P0002', 1, 600000, NULL, 600000),
+('ORD000004', 'P0006', 1, 350000, NULL, 350000),
+('ORD000005', 'P0007', 2, 1000000, NULL, 2000000);
+
+
 -- Phân hệ 5: Phân hệ kinh doanh 
 INSERT INTO Product_sold_report (id, date_report, id_product, quantity_sold, quantity_customer, id_employee)
 VALUES
