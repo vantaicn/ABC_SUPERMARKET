@@ -54,7 +54,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE sp_CalCustomerLastYearExpense
+ALTER PROCEDURE sp_CalCustomerLastYearExpense
     @id CHAR(10),
     @start_date DATE,
     @end_date DATE,
@@ -68,7 +68,7 @@ BEGIN
 		SET @total_expense = 0;
 
 		SELECT @total_expense = ISNULL(SUM(total_price), 0)
-		FROM orders
+		FROM [order]
 		WHERE id_customer = @id AND create_date BETWEEN @start_date AND @end_date
 	END TRY
 	BEGIN CATCH
@@ -381,7 +381,7 @@ BEGIN
         -- Đọc giá sản phẩm với shared lock
         SELECT @price = price 
         FROM Product WITH (HOLDLOCK, ROWLOCK)
-        WHERE product_id = @id_product;
+        WHERE id = @id_product;
 
         IF @price IS NULL
         BEGIN
@@ -419,44 +419,44 @@ BEGIN
         BEGIN TRANSACTION;
 
         -- Xác định loại khách hàng
-        SELECT @customer_type = customer_type 
+        SELECT @customer_type = id_rank
         FROM Customer WITH (HOLDLOCK, ROWLOCK)
-        WHERE customer_id = @id_customer;
+        WHERE id_customer = @id_customer;
 
         -- Ưu tiên Flash Sale
         SELECT TOP 1 
-            @best_sale_id = promotion_id, 
-            @discount = discount_percent
+            @best_sale_id = id, 
+            @discount = discount
         FROM Promotion WITH (HOLDLOCK, ROWLOCK)
-        WHERE promotion_type = 'Flash Sale' 
-            AND product_id = @id_product
-            AND current_quantity > 0
-        ORDER BY discount_percent DESC;
+        WHERE type = 'Flash' 
+            AND id_product = @id_product
+            AND max_quantity - used_quantity > 0
+        ORDER BY discount DESC;
 
         -- Nếu không có Flash Sale, tìm Combo Sale
         IF @best_sale_id IS NULL
         BEGIN
             SELECT TOP 1 
-                @best_sale_id = promotion_id, 
-                @discount = discount_percent
+                @best_sale_id = id, 
+                @discount = discount
             FROM Promotion WITH (HOLDLOCK, ROWLOCK)
-            WHERE promotion_type = 'Combo Sale' 
-                AND product_id = @id_product
-                AND current_quantity > 0
-            ORDER BY discount_percent DESC;
+            WHERE type = 'Combo' 
+                AND id_product = @id_product
+                AND max_quantity - used_quantity > 0
+            ORDER BY discount DESC;
         END
 
         -- Nếu không có Combo Sale, tìm Member Sale
-        IF @best_sale_id IS NULL AND @customer_type IN ('Gold', 'Platinum')
+        IF @best_sale_id IS NULL AND @customer_type IN ('R004', 'R005', 'R006')
         BEGIN
             SELECT TOP 1 
-                @best_sale_id = promotion_id, 
-                @discount = discount_percent
+                @best_sale_id = id, 
+                @discount = discount
             FROM Promotion WITH (HOLDLOCK, ROWLOCK)
-            WHERE promotion_type = 'Member Sale' 
-                AND product_id = @id_product
-                AND current_quantity > 0
-            ORDER BY discount_percent DESC;
+            WHERE type = 'Member' 
+                AND id = @id_product
+                AND max_quantity - used_quantity > 0
+            ORDER BY discount DESC;
         END
 
         COMMIT TRANSACTION;
@@ -502,8 +502,8 @@ BEGIN
         IF @sale_id IS NOT NULL
         BEGIN
             UPDATE Promotion WITH (ROWLOCK)
-            SET current_quantity = current_quantity - @quantity
-            WHERE promotion_id = @sale_id AND current_quantity >= @quantity;
+            SET used_quantity = used_quantity + @quantity
+            WHERE id = @sale_id AND max_quantity - used_quantity >= @quantity;
 
             IF @@ROWCOUNT = 0
             BEGIN
@@ -536,17 +536,18 @@ BEGIN
     SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
     DECLARE @customer_type NVARCHAR(50);
-    DECLARE @total_purchase DECIMAL(18,2);
+    DECLARE @total_purchase INT;
 
     BEGIN TRY
         BEGIN TRANSACTION;
 
         -- Lấy thông tin khách hàng
-        SELECT 
-            @customer_type = customer_type,
-            @total_purchase = total_purchase
-        FROM Customer WITH (HOLDLOCK)
-        WHERE customer_id = @id_customer;
+        
+		EXEC sp_CalCustomerLastYearExpense 
+			@id = @id_customer, 
+			@start_date = '2025-01-01', 
+			@end_date = '2025-12-31', 
+			@total_expense = @total_purchase OUTPUT;
 
         -- Áp dụng chiết khấu theo loại khách hàng
         SET @loyalty_discount = 0;
@@ -585,7 +586,7 @@ CREATE TYPE ProductTableType AS TABLE (
 );
 
 GO
-CREATE PROCEDURE sp_ProcessCustomerOrder
+ALTER PROCEDURE sp_ProcessCustomerOrder
     @id_customer CHAR(10), 
     @id_order CHAR(10), 
     @create_date DATE,
@@ -605,7 +606,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         -- 1. Kiểm tra tài khoản khách hàng
-        IF NOT EXISTS (SELECT 1 FROM Customer WITH (HOLDLOCK) WHERE customer_id = @id_customer)
+        IF NOT EXISTS (SELECT 1 FROM Customer WITH (HOLDLOCK) WHERE id_customer = @id_customer)
         BEGIN
             RAISERROR('Khách hàng không tồn tại', 16, 1);
             ROLLBACK TRANSACTION;
@@ -613,9 +614,9 @@ BEGIN
         END
 
         -- 2. Kiểm tra và tạo đơn hàng
-        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE order_id = @id_order)
+        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE id_order = @id_order)
         BEGIN
-            INSERT INTO [Order] (order_id, customer_id, create_date, processing_employee, total_price)
+            INSERT INTO [Order] (id_order, id_customer, create_date, processing_employee, total_price)
             VALUES (@id_order, @id_customer, @create_date, @processing_employee, 0);
         END
 
@@ -649,14 +650,16 @@ BEGIN
                 @discount, 
                 @product_final_price OUTPUT;
 
+			PRINT 'Giá trị của biến là: ' + CAST(@product_final_price AS VARCHAR(10))
+
             -- 3.4 Lưu chi tiết đơn hàng
-            INSERT INTO Detail_Order (order_id, product_id, quantity, price, sale_id)
-            VALUES (@id_order, @current_product_id, @current_quantity, @product_final_price, @sale_id);
+            INSERT INTO Detail_Order (id_order, id_product, quantity, total_price, id_sale, price)
+            VALUES (@id_order, @current_product_id, @current_quantity, @product_final_price, @sale_id, @product_price);
 
             -- 3.5 Cập nhật số lượng sản phẩm
             UPDATE Product WITH (UPDLOCK)
             SET current_quantity = current_quantity - @current_quantity
-            WHERE product_id = @current_product_id;
+            WHERE id = @current_product_id;
 
             SET @sub_total = @sub_total + @product_final_price;
 
@@ -674,7 +677,7 @@ BEGIN
         -- 6. Cập nhật giá trị đơn hàng
         UPDATE [Order] WITH (UPDLOCK)
         SET total_price = @final_price
-        WHERE order_id = @id_order;
+        WHERE id_order = @id_order;
 
         COMMIT TRANSACTION;
     END TRY
@@ -700,7 +703,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         -- 1. Kiểm tra tồn tại đơn hàng
-        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE order_id = @id_order)
+        IF NOT EXISTS (SELECT 1 FROM [Order] WITH (UPDLOCK) WHERE id_order = @id_order)
         BEGIN
             RAISERROR('Đơn hàng không tồn tại', 16, 1);
             ROLLBACK TRANSACTION;
@@ -715,30 +718,30 @@ BEGIN
         );
 
         INSERT INTO @DetailProducts
-        SELECT product_id, quantity, sale_id 
-        FROM Detail_Order WITH (UPDLOCK)
-        WHERE order_id = @id_order;
+        SELECT id_product, quantity, id_sale 
+        FROM Detail_order WITH (UPDLOCK)
+        WHERE id_order = @id_order;
 
         -- 3. Hoàn lại số lượng sản phẩm
         UPDATE Product WITH (UPDLOCK)
         SET current_quantity = current_quantity + dp.quantity
         FROM Product p
-        JOIN @DetailProducts dp ON p.product_id = dp.product_id;
+        JOIN @DetailProducts dp ON p.id = dp.product_id;
 
         -- 4. Hoàn lại số lượng khuyến mãi
         UPDATE Promotion WITH (UPDLOCK)
-        SET current_quantity = current_quantity + dp.quantity
+        SET used_quantity = used_quantity - dp.quantity
         FROM Promotion pr
-        JOIN @DetailProducts dp ON pr.promotion_id = dp.sale_id
+        JOIN @DetailProducts dp ON pr.id = dp.sale_id
         WHERE dp.sale_id IS NOT NULL;
 
         -- 5. Xóa chi tiết đơn hàng
         DELETE FROM Detail_Order WITH (UPDLOCK)
-        WHERE order_id = @id_order;
+        WHERE id_order = @id_order;
 
         -- 6. Xóa đơn hàng
         DELETE FROM [Order] WITH (UPDLOCK)
-        WHERE order_id = @id_order;
+        WHERE id_order = @id_order;
 
         -- 7. Cập nhật thông tin khách hàng (nếu cần)
         -- Phần này sẽ phụ thuộc vào logic cụ thể của hệ thống
