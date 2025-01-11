@@ -161,6 +161,8 @@ VALUES
 ('MS0009', 'Member', 'P0003', NULL, 7, 10, 12, 15, 18, 19, '2024-12-26', '2024-12-31', 85, 0),
 ('MS0010', 'Member', 'P0004', NULL, 6, 9, 12, 16, 18, 20, '2024-12-27', '2024-12-30', 70, 0);
 
+
+
 -- Phân hệ 3:Quản lý đơn đặt hàng (Thành)
 INSERT INTO "Order" (id_order, id_customer, create_date, total_price, processing_employee) VALUES
 ('ORD000001', 'CUST00001', '2025-01-10', 1200000, 'EMP001'),
@@ -178,6 +180,44 @@ INSERT INTO Detail_order (id_order, id_product, quantity, price, id_sale, total_
 ('ORD000004', 'P0002', 1, 600000, NULL, 600000),
 ('ORD000004', 'P0006', 1, 350000, NULL, 350000),
 ('ORD000005', 'P0007', 2, 1000000, NULL, 2000000);
+
+
+-- Phân hệ 4: Quản lý kho hàng (Thuận)
+INSERT INTO Product(id,name,category,description,id_manufacturer,price,max_quantity,current_quantity)
+values
+	('PD0001', 'Milk', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400),
+    ('PD0002', 'Bread', 'CAKE', 'Whole grain bread', 'M000000002', 15000, 500, 250),
+    ('PD0003', 'Butter', 'BUTTER', 'Salted butter', 'M000000002', 30000, 700, 200),
+    ('PD0004', 'Cheese', 'CHEESE', 'Cheddar cheese', 'M000000003', 45000, 500, 300),
+    ('PD0005', 'Pepsi', 'Drink', 'fresh', 'M000000004', 45000, 500, 300),
+	('PD0006', 'TH true milk', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400),
+	('PD0007', 'cocacola', 'Drink', 'Fresh', 'M000000004', 5000, 1000, 400),
+	('PD0008', 'Snack', 'CAKE', 'Whole grain bread', 'M000000002', 15000, 500, 250),
+	('PD0009', 'oild', 'CHEESE', 'Cheddar cheese', 'M000000003', 15000, 500, 250),
+	('PD0010', 'MILO', 'MILK', 'Fresh milk', 'M000000001', 5000, 1000, 400)
+Go
+
+INSERT INTO ImportOrder (
+    id,
+    id_product,
+    id_employee,
+    quantity_order,
+    quantity_receive,
+    date_order, 
+    date_receive,
+    status
+)
+VALUES
+    ('ORD000001', 'PD0001', 'EMP001', 200, 100, '2024-01-09', '2024-12-10', 'COMPLETED'),
+    ('ORD000002', 'PD0001', 'EMP002', 200, 100, '2024-09-30', '2024-12-20', 'COMPLETED'),
+    ('ORD000003', 'PD0002', 'EMP001', 100, 50, '2024-12-15', '2025-01-09', 'COMPLETED'),
+    ('ORD000004', 'PD0002', 'EMP002', 100, 50, '2024-12-20', '2025-01-10', 'COMPLETED'),
+    ('ORD000005', 'PD0003', 'EMP003', 100, 90, '2024-12-30', '2025-01-12', 'COMPLETED'),
+    ('ORD000006', 'PD0003', 'EMP002', 100, 200, '2024-01-01', '2025-01-14', 'COMPLETED'),
+    ('ORD000007', 'PD0004', 'EMP003', 100, NULL, '2024-12-30', NULL, 'PENDING'),
+    ('ORD000008', 'PD0004', 'EMP002', 200, NULL, '2025-01-07', NULL, 'PENDING'),
+    ('ORD000009', 'PD0005', 'EMP004', 50, NULL, '2025-01-09', NULL, 'PENDING'),
+    ('ORD000010', 'PD0005', 'EMP002', 50, 50, '2024-12-30', '2025-01-09', 'COMPLETED')
 
 
 -- Phân hệ 5: Phân hệ kinh doanh 
