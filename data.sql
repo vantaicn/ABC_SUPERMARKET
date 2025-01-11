@@ -101,3 +101,22 @@ VALUES
 ('MS0008', 'Member', 'P0002', NULL, 5, 8, 10, 14, 17, 20, '2024-12-25', '2024-12-30', 95, 0),
 ('MS0009', 'Member', 'P0003', NULL, 7, 10, 12, 15, 18, 19, '2024-12-26', '2024-12-31', 85, 0),
 ('MS0010', 'Member', 'P0004', NULL, 6, 9, 12, 16, 18, 20, '2024-12-27', '2024-12-30', 70, 0);
+
+-- Phân hệ 5: Phân hệ kinh doanh 
+INSERT INTO Product_sold_report (id, date_report, id_product, quantity_sold, quantity_customer, id_employee)
+VALUES
+('RPT001', '2025-01-10', 'PRD001', 50, 20, 'EMP001'),
+('RPT002', '2025-01-10', 'PRD002', 30, 15, 'EMP001'),
+('RPT003', '2025-01-10', 'PRD003', 70, 25, 'EMP002'),
+('RPT004', '2025-01-10', 'PRD004', 20, 10, 'EMP002'),
+('RPT005', '2025-01-10', 'PRD005', 40, 18, 'EMP003');
+GO
+
+INSERT INTO Daily_report (id, date_report, total_customer, total_revenue, total_sold_products, id_employee)
+VALUES
+('DR001', '2025-01-10', 75, 5000000, 210, 'EMP001'),
+('DR002', '2025-01-10', 85, 4500000, 220, 'EMP002'),
+('DR003', '2025-01-10', 70, 5200000, 190, 'EMP003'),
+('DR004', '2025-01-11', 60, 4800000, 160, 'EMP001'),
+('DR005', '2025-01-11', 55, 5000000, 170, 'EMP002');
+GO

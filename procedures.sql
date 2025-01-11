@@ -153,3 +153,66 @@ BEGIN
     WHERE id = @id AND type = 'Member';
 END;
 GO
+
+-- Phân hệ 5: Phân hệ kinh doanh 
+CREATE PROCEDURE sp_AddDailyReport (
+    @id CHAR(10),
+    @date_report DATE,
+    @id_employee CHAR(10)
+)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    DECLARE @total_customer INT;
+    DECLARE @total_revenue INT;
+    DECLARE @total_sold_products INT;
+
+    -- Tính tổng số khách hàng mua, tổng doanh thu
+    SELECT @total_customer = COUNT(DISTINCT id_customer), @total_revenue = SUM(total_price)
+    FROM Order WITH (HOLDLOCK, UPDLOCK)
+    WHERE create_date = @date_report;
+
+    -- Tính tổng số sản phẩm đã bán trong ngày
+    SELECT @total_sold_products = SUM(DO.quantity)
+    FROM Detail_order DO WITH (HOLDLOCK, UPDLOCK)
+    INNER JOIN Order O ON DO.id_order = O.id
+    WHERE O.create_date = @date_report;
+
+
+    -- Lưu kết quả vào bảng Daily_report
+    INSERT INTO Daily_report (id, date_report, total_customer, total_revenue, total_sold_products, id_employee)
+    VALUES (@id, @date_report, @total_customer, @total_revenue, @total_sold_products, @id_employee);
+
+	COMMIT;
+END;
+GO
+
+CREATE PROCEDURE sp_AddProductSoldReport (
+    @id CHAR(10),
+    @date_report DATE,
+    @id_employee CHAR(10)
+)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    INSERT INTO Product_sold_report (id, date_report, id_product, quantity_sold, quantity_customer, id_employee)
+    SELECT 
+        @id, 
+        @date_report,
+        DO.id_product,
+        SUM(DO.quantity) AS quantity_sold,
+        COUNT(DISTINCT O.id_customer) AS quantity_customer,
+        @id_employee
+    FROM Detail_order DO WITH (HOLDLOCK, UPDLOCK)
+    INNER JOIN Order O WITH (HOLDLOCK, UPDLOCK) ON DO.id_order = O.id
+    WHERE O.create_date = @date_report
+    GROUP BY DO.id_product
+    ORDER BY quantity_sold DESC;
+
+    COMMIT;
+END;
+GO

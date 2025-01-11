@@ -41,3 +41,29 @@ CREATE TABLE Promotion (
     FOREIGN KEY (id_product_combo) REFERENCES Product(id)
 );
 
+-- Phân hệ 5: Phân hệ kinh doanh 
+
+CREATE TABLE Product_sold_report (
+	id CHAR(10),
+	date_report DATE,
+	id_product CHAR(10),
+	quantity_sold INT,
+	quantity_customer INT,
+	id_employee CHAR(10),
+	PRIMARY KEY (id, id_product),
+	FOREIGN KEY (id_product) REFERENCES Product(id),
+	FOREIGN KEY (id_employee) REFERENCES Employee(id),
+);
+GO
+
+CREATE TABLE Daily_report (
+	id CHAR(10) PRIMARY KEY,
+	date_report DATE,
+	total_customer CHAR(10),
+	total_revenue INT,
+	total_sold_products INT,
+	id_employee CHAR(10),
+	FOREIGN KEY (id_employee) REFERENCES Employee(id),
+);
+GO
+
