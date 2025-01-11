@@ -52,9 +52,10 @@ BEGIN
     END CATCH
 	COMMIT TRANSACTION
 END
+
 GO
 
-ALTER PROCEDURE sp_CalCustomerLastYearExpense
+CREATE PROCEDURE sp_CalCustomerLastYearExpense
     @id CHAR(10),
     @start_date DATE,
     @end_date DATE,
@@ -228,11 +229,20 @@ CREATE PROCEDURE sp_AddProduct
     @currentQuantity INT
 AS
 BEGIN
-    INSERT INTO Product (id, name, category, description, id_manufacturer, price, max_quantity, current_quantity)
-    VALUES (@id, @name, @category, @description, @idManufacturer, @price, @maxQuantity, @currentQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Product (id, name, category, description, id_manufacturer, price, max_quantity, current_quantity)
+        VALUES (@id, @name, @category, @description, @idManufacturer, @price, @maxQuantity, @currentQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW; -- Ném lỗi để client biết giao tác thất bại
+    END CATCH
 END;
 GO
-
 
 CREATE PROCEDURE sp_UpdateProductInfo
     @id CHAR(10),
@@ -244,15 +254,25 @@ CREATE PROCEDURE sp_UpdateProductInfo
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Product
-    SET 
-        name = @name,
-        category = @category,
-        description = @description,
-        id_manufacturer = @idManufacturer,
-        price = @price,
-        max_quantity = @maxQuantity
-    WHERE id = @id;
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Product
+        SET 
+            name = @name,
+            category = @category,
+            description = @description,
+            id_manufacturer = @idManufacturer,
+            price = @price,
+            max_quantity = @maxQuantity
+        WHERE id = @id;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -266,8 +286,18 @@ CREATE PROCEDURE sp_AddFlashSale
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Flash', @idProduct, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Flash', @idProduct, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -282,8 +312,18 @@ CREATE PROCEDURE sp_AddComboSale
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, id_product_combo, discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Combo', @idProduct, @idProductCombo, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, id_product_combo, discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Combo', @idProduct, @idProductCombo, @discount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -295,15 +335,25 @@ CREATE PROCEDURE sp_AddMemberSale
     @silverDiscount INT,
     @goldDiscount INT,
     @platinumDiscount INT,
-	@diamondDiscount INT,
+    @diamondDiscount INT,
     @startDate DATE,
     @endDate DATE,
     @maxQuantity INT,
     @usedQuantity INT
 AS
 BEGIN
-    INSERT INTO Promotion (id, type, id_product, discount, bronze_discount, silver_discount, gold_discount, platinum_discount, diamond_discount, start_date, end_date, max_quantity, used_quantity)
-    VALUES (@id, 'Member', @idProduct, @discount, @bronzeDiscount, @silverDiscount, @goldDiscount, @platinumDiscount, @diamondDiscount, @startDate, @endDate, @maxQuantity, @usedQuantity)
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        INSERT INTO Promotion (id, type, id_product, discount, bronze_discount, silver_discount, gold_discount, platinum_discount, diamond_discount, start_date, end_date, max_quantity, used_quantity)
+        VALUES (@id, 'Member', @idProduct, @discount, @bronzeDiscount, @silverDiscount, @goldDiscount, @platinumDiscount, @diamondDiscount, @startDate, @endDate, @maxQuantity, @usedQuantity);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -314,12 +364,22 @@ CREATE PROCEDURE sp_UpdateFlashSale
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Flash';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Flash';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -330,12 +390,22 @@ CREATE PROCEDURE sp_UpdateComboSale
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Combo';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Combo';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -346,22 +416,32 @@ CREATE PROCEDURE sp_UpdateMemberSale
     @silverDiscount INT,
     @goldDiscount INT,
     @platinumDiscount INT,
-	@diamondDiscount INT,
+    @diamondDiscount INT,
     @endDate DATE,
     @maxQuantity INT
 AS
 BEGIN
-    UPDATE Promotion
-    SET 
-        discount = @discount,
-        bronze_discount = @bronzeDiscount,
-        silver_discount = @silverDiscount,
-        gold_discount = @goldDiscount,
-        platinum_discount = @platinumDiscount,
-        diamond_discount = @diamondDiscount,
-        end_date = @endDate,
-        max_quantity = @maxQuantity
-    WHERE id = @id AND type = 'Member';
+    SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        UPDATE Promotion
+        SET 
+            discount = @discount,
+            bronze_discount = @bronzeDiscount,
+            silver_discount = @silverDiscount,
+            gold_discount = @goldDiscount,
+            platinum_discount = @platinumDiscount,
+            diamond_discount = @diamondDiscount,
+            end_date = @endDate,
+            max_quantity = @maxQuantity
+        WHERE id = @id AND type = 'Member';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -757,6 +837,219 @@ BEGIN
 END
 
 GO
+
+
+-- Phân hệ 4: Quản lý kho hàng (Thuận)
+CREATE PROCEDURE sp_KiemTraVaTinhSoLuongDatHang
+    @id_product CHAR(10),
+    @quantity_oder INT OUTPUT
+AS
+BEGIN
+    BEGIN TRANSACTION; 
+
+    BEGIN TRY
+        DECLARE @current_stock INT
+        DECLARE @max_capacity INT
+        DECLARE @pending_orders INT
+
+        SELECT 
+            @current_stock = current_quantity, 
+            @max_capacity = max_quantity
+        FROM Product 
+        WHERE id = @id_product
+
+        SELECT @pending_orders = COALESCE(SUM(quantity_order - quantity_receive), 0)
+        FROM ImportOrder
+        WHERE id_product = @id_product AND status IN ('PENDING', 'PARTIAL')
+
+        DECLARE @minimum_order INT = FLOOR(@max_capacity * 0.1)
+        DECLARE @reorder_threshold INT = FLOOR(@max_capacity * 0.7)
+
+        IF (@current_stock + @pending_orders) < @reorder_threshold
+        BEGIN
+            SET @quantity_oder = LEAST(
+                @max_capacity - (@current_stock + @pending_orders),  -- Không vượt quá sức chứa
+                GREATEST(@minimum_order, @reorder_threshold - (@current_stock + @pending_orders))  -- Tối thiểu 10% SL-SP-TĐ
+            )
+        END
+        ELSE
+        BEGIN
+            SET @quantity_oder = 0
+        END
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK; 
+        THROW; 
+    END CATCH
+END
+GO
+CREATE PROCEDURE sp_TaoDonDatHang
+    @id_product CHAR(10),
+    @id_order CHAR(10) OUTPUT,
+    @id_employee CHAR(10)
+AS
+BEGIN
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @quantity_order INT;
+
+        EXEC sp_KiemTraVaTinhSoLuongDatHang @id_product, @quantity_order OUTPUT;
+
+        IF @quantity_order > 0
+        BEGIN
+            DECLARE @next_order_id INT;
+            SELECT @next_order_id = COUNT(*) + 1 FROM ImportOrder;
+
+            SET @id_order = 'ORD' + RIGHT('00000' + CAST(@next_order_id AS VARCHAR(4)), 4);
+
+            -- Tạo đơn hàng
+            INSERT INTO ImportOrder (
+                id, 
+                id_product, 
+                date_order, 
+                quantity_order, 
+                id_employee,
+                status
+            )
+            VALUES (
+                @id_order, 
+                @id_product, 
+                GETDATE(), 
+                @quantity_order, 
+                @id_employee,
+                'PENDING'
+            );
+        END
+        ELSE
+        BEGIN
+            SET @id_order = NULL;
+        END
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;
+        THROW;
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE sp_CapNhatNhanHang
+    @id_product CHAR(10),
+    @quantity_receive INT,
+    @date_receive DATETIME
+AS
+BEGIN
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @total_received INT = @quantity_receive
+        DECLARE @current_order_id CHAR(10) = NULL
+        DECLARE @current_order_quantity INT = 0
+        DECLARE @current_received_quantity INT = 0
+        DECLARE @remaining_quantity INT = 0
+
+        WHILE @total_received > 0
+        BEGIN
+            SELECT TOP 1 
+                @current_order_id = id,
+                @current_order_quantity = quantity_order,
+                @current_received_quantity = quantity_receive
+            FROM ImportOrder
+            WHERE id_product = @id_product 
+              AND status IN ('PENDING', 'PARTIAL')
+            ORDER BY date_order ASC
+
+            IF @current_order_id IS NULL
+                BREAK
+
+            SET @remaining_quantity = @current_order_quantity - @current_received_quantity
+            IF @total_received >= @remaining_quantity
+            BEGIN
+                UPDATE ImportOrder
+                SET 
+                    quantity_receive = @quantity_receive,
+                    date_receive = @date_receive,
+                    status = 'COMPLETED'
+                WHERE id = @current_order_id
+
+                SET @total_received = @total_received - @remaining_quantity
+            END
+            ELSE
+            BEGIN
+                UPDATE ImportOrder
+                SET 
+                    quantity_receive = @quantity_receive,
+                    date_receive = @date_receive,
+                    status = 'COMPLETED'
+                WHERE id = @current_order_id
+
+                SET @total_received = 0
+            END
+
+            SET @current_order_id = NULL
+            SET @current_order_quantity = 0
+            SET @current_received_quantity = 0
+            SET @remaining_quantity = 0
+        END
+
+        UPDATE Product
+        SET current_quantity = current_quantity + @quantity_receive
+        WHERE id = @id_product
+
+        COMMIT; 
+    END TRY
+    BEGIN CATCH
+        ROLLBACK; 
+        THROW; 
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE sp_DuyetTatCaSanPhamVaDatHang
+AS
+BEGIN
+	SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @id_product CHAR(10);
+        DECLARE @quantity_oder INT;
+        DECLARE @id_order CHAR(10);
+
+        DECLARE cur CURSOR FOR
+        SELECT id FROM Product;
+        OPEN cur;
+
+        FETCH NEXT FROM cur INTO @id_product;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            EXEC sp_KiemTraVaTinhSoLuongDatHang @id_product, @quantity_oder OUTPUT;
+
+            IF @quantity_oder > 0
+            BEGIN
+                EXEC sp_TaoDonDatHang @id_product, @id_order OUTPUT, 'EMP001';
+                PRINT 'Đã tạo đơn đặt hàng: ' + @id_order + ' cho sản phẩm: ' + @id_product;
+            END
+
+            FETCH NEXT FROM cur INTO @id_product;
+        END
+
+        CLOSE cur;
+        DEALLOCATE cur;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;
+        THROW;
+    END CATCH
+END;
 
 -- Phân hệ 5: Phân hệ kinh doanh 
 CREATE PROCEDURE sp_AddDailyReport (

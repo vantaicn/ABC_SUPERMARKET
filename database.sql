@@ -25,20 +25,20 @@ id_rank CHAR(10) CONSTRAINT df_idrank DEFAULT 1,
 CONSTRAINT fk_customer_loyalRank FOREIGN KEY (id_rank) REFERENCES loyal_rank(id_rank),
 )
 
-create table department(
-id char(10) constraint pk_department primary key,
-name nvarchar(30),
-leader char(10)
+CREATE TABLE department(
+id char(10) CONSTRAINT pk_department PRIMARY KEY,
+name NVARCHAR(30),
+leader CHAR(10)
 )
 
-create table employee(
-id char(10) constraint pk_employee primary key,
-name nvarchar(30),
-gender nvarchar(5),
-identification char(15),
-phone_number char(10),
-id_department char(10)
-constraint fk_employee_department foreign key (id_department) references department(id)
+CREATE TABLE employee(
+id CHAR(10) CONSTRAINT pk_employee PRIMARY KEY,
+name NVARCHAR(30),
+gender NVARCHAR(5),
+identification CHAR(15),
+phone_number CHAR(10),
+id_department CHAR(10)
+CONSTRAINT fk_employee_department FOREIGN KEY (id_department) REFERENCES department(id)
 )
 
 -- Phân hệ 2: Quản lý ngành hàng (Tài)
@@ -73,6 +73,7 @@ CREATE TABLE Promotion (
     FOREIGN KEY (id_product_combo) REFERENCES Product(id)
 );
 
+
 -- Phân hệ 3: Quản lý đơn hàng (Thành)
 -- Tạo bảng Order
 CREATE TABLE "Order" (
@@ -98,6 +99,21 @@ CREATE TABLE Detail_order (
     FOREIGN KEY (id_product) REFERENCES Product(id),
     FOREIGN KEY (id_sale) REFERENCES Promotion(id)
 );
+
+
+-- Phân hệ 4: Quản lý kho hàng (Thuận)
+CREATE TABLE ImportOrder (
+    id CHAR(10) PRIMARY KEY,       
+    id_product CHAR(10) NOT NULL,  
+    id_employee CHAR(10), 
+    quantity_order INT,   
+    quantity_receive INT , 
+    date_order DATE,      
+    date_receive DATE,             
+    status nvarchar(10),
+    FOREIGN KEY (id_product) REFERENCES Product(id)
+)
+go
 
 
 -- Phân hệ 5: Phân hệ kinh doanh 
